@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Rizpedia — Top Up Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#1A161F;
+    --surface:#221C29;
+    --surface-raised:#2B2433;
+    --surface-hi:#332B3C;
+    --yellow:#F2F52C;
+    --yellow-dim:#c9cc22;
+    --magenta:#FF3D6E;
+    --green:#3DDC84;
+    --text:#F5F2ED;
+    --muted:#9A8FA6;
+    --hairline:rgba(242,245,44,0.14);
+    --hairline-soft:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--void);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;}
+  body{min-height:100vh;}
+  .display{font-family:'Chakra Petch',sans-serif;}
+  .mono{font-family:'Space Mono',monospace;}
+
+  /* HUD cut-corner shape used across cards */
+  .hud{
+    clip-path:polygon(0 14px,14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+  }
+  .hud-sm{
+    clip-path:polygon(0 9px,9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
+  }
+
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ===== App shell ===== */
+  .app{max-width:1280px;margin:0 auto;padding:0 32px 80px;position:relative;}
+
+  /* ===== Top nav ===== */
+  .topnav{
+    display:flex;align-items:center;gap:28px;
+    padding:22px 0;border-bottom:1px solid var(--hairline-soft);
+    position:sticky;top:0;background:var(--void);z-index:40;
+  }
+  .burger{
+    width:42px;height:42px;background:var(--surface);border:1px solid var(--hairline-soft);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+  }
+  .burger span{width:18px;height:2px;background:var(--yellow);display:block;}
+  .logo{display:flex;align-items:center;gap:9px;}
+  .logo-img{height:32px;width:auto;display:block;}
+  .navlinks{display:flex;gap:26px;margin-left:8px;font-size:14px;font-weight:600;color:var(--text);}
+  .navlinks a:hover{color:var(--yellow);}
+  .navlinks .active{color:var(--yellow);}
+  .searchbar{
+    flex:1;max-width:380px;height:42px;background:var(--surface);border:1px solid var(--hairline-soft);
+    display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--muted);font-size:13px;
+  }
+  .searchbar input{
+    flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);
+    font-family:inherit;font-size:13px;
+  }
+  .searchbar input::placeholder{color:var(--muted);}
+  .navcta{margin-left:auto;display:flex;align-items:center;gap:14px;}
+  .icon-btn{
+    width:42px;height:42px;background:var(--surface);border:1px solid var(--hairline-soft);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .dot{position:absolute;top:8px;right:8px;width:6px;height:6px;background:var(--magenta);border-radius:50%;}
+  .notif-wrap{position:relative;}
+  .notif-panel{
+    position:absolute;top:calc(100% + 10px);right:0;width:320px;background:var(--surface);
+    border:1px solid var(--hairline-soft);box-shadow:0 20px 40px rgba(0,0,0,0.4);
+    z-index:60;display:none;max-height:380px;flex-direction:column;
+  }
+  .notif-panel.on{display:flex;}
+  .notif-panel-head{padding:14px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--hairline-soft);}
+  .notif-list{overflow-y:auto;}
+  .notif-item{padding:12px 16px;border-bottom:1px solid var(--hairline-soft);font-size:12px;line-height:1.5;}
+  .notif-item .t{color:var(--text);}
+  .notif-item .d{color:var(--muted);font-size:10px;margin-top:4px;}
+  .notif-empty{padding:24px 16px;text-align:center;color:var(--muted);font-size:12px;}
+  .btn-primary{
+    background:var(--yellow);color:var(--void);font-weight:800;font-size:13px;
+    padding:11px 22px;letter-spacing:0.3px;border:none;
+  }
+  .btn-primary:hover{background:#fff44a;}
+  .btn-ghost{
+    background:transparent;color:var(--text);font-weight:700;font-size:13px;
+    padding:10px 20px;border:1px solid var(--hairline);
+  }
+
+  .screen{display:none;}
+
+  /* ===== Voucher ===== */
+  .voucher-head{display:flex;align-items:flex-end;justify-content:space-between;margin:32px 0 24px;}
+  .voucher-head h2{font-family:'Chakra Petch';font-size:24px;font-weight:600;}
+  .voucher-head p{font-size:13px;color:var(--muted);margin-top:6px;}
+  .voucher-shuffle-info{font-size:11px;color:var(--muted);margin-top:8px;}
+  .voucher-locked{
+    background:var(--surface);border:1px dashed var(--hairline);padding:32px;text-align:center;margin-bottom:24px;
+    display:none;
+  }
+  .voucher-locked p{color:var(--muted);font-size:14px;margin-bottom:16px;}
+  .voucher-wallet-head{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin:32px 0 14px;}
+  .voucher-wallet{display:flex;flex-wrap:wrap;gap:10px;}
+  .voucher-wallet-empty{font-size:13px;color:var(--muted);}
+  .voucher-chip{
+    display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--hairline-soft);
+    padding:8px 14px;font-size:12px;
+  }
+  .voucher-chip code{font-family:'Space Mono';color:var(--yellow);font-size:12px;}
+  .voucher-chip span{color:var(--muted);}
+  .voucher-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .voucher-card{
+    position:relative;background:var(--surface);border:1px solid var(--hairline-soft);
+    display:flex;overflow:hidden;
+  }
+  .voucher-card .stub{
+    flex:0 0 96px;background:linear-gradient(160deg,var(--yellow),#c9cc22);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--void);font-family:'Chakra Petch';font-weight:700;text-align:center;padding:10px;position:relative;
+  }
+  .voucher-card .stub small{font-size:9px;font-weight:600;margin-top:2px;opacity:0.75;}
+  .voucher-card .stub-value{font-size:20px;line-height:1.15;}
+  /* efek lubang kupon (dashed notch) */
+  .voucher-card .stub:after{
+    content:"";position:absolute;right:-9px;top:0;bottom:0;width:18px;
+    background:radial-gradient(circle,var(--surface) 0 6px,transparent 6.5px) 0 -9px/18px 18px repeat-y;
+  }
+  .voucher-card .body{flex:1;padding:16px 18px;min-width:0;}
+  .voucher-card .body h4{font-size:14px;font-weight:700;}
+  .voucher-card .body .scope{font-size:11px;color:var(--muted);margin-top:2px;}
+  .voucher-card .body .terms{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .voucher-card .body .code-row{
+    display:flex;align-items:center;gap:8px;margin-top:12px;
+    background:var(--surface-hi);border:1px dashed var(--hairline);padding:7px 10px;
+  }
+  .voucher-card .body .code-row code{font-family:'Space Mono';font-size:12px;letter-spacing:1px;flex:1;}
+  .voucher-card .body .code-row button{
+    background:transparent;border:none;color:var(--yellow);font-size:11px;font-weight:700;white-space:nowrap;
+  }
+
+  /* ===== Leaderboard ===== */
+  .lb-podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:32px;}
+  .lb-podium-item{
+    background:var(--surface);border:1px solid var(--hairline-soft);width:200px;
+    padding:20px 16px;text-align:center;position:relative;
+  }
+  .lb-podium-item.rank-1{order:2;padding-top:34px;border-color:var(--hairline);box-shadow:0 0 0 1px var(--yellow) inset;}
+  .lb-podium-item.rank-2{order:1;}
+  .lb-podium-item.rank-3{order:3;}
+  .lb-medal{font-size:26px;margin-bottom:6px;}
+  .lb-avatar{
+    width:52px;height:52px;border-radius:50%;margin:0 auto 10px;
+    background:linear-gradient(135deg,var(--yellow),#c9cc22);
+    display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch';font-weight:700;
+    color:var(--void);font-size:18px;
+  }
+  .lb-podium-item.rank-1 .lb-avatar{width:64px;height:64px;font-size:22px;}
+  .lb-podium-item .lb-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lb-podium-item .lb-amount{font-family:'Space Mono';font-size:13px;color:var(--yellow);margin-top:6px;}
+  .lb-list{background:var(--surface);border:1px solid var(--hairline-soft);}
+  .lb-row{
+    display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--hairline-soft);
+  }
+  .lb-row:last-child{border-bottom:none;}
+  .lb-row .lb-rank{width:26px;font-family:'Space Mono';font-size:13px;color:var(--muted);flex:0 0 auto;}
+  .lb-row .lb-avatar{width:34px;height:34px;font-size:13px;margin:0;flex:0 0 auto;}
+  .lb-row .lb-name{flex:1;font-size:13px;font-weight:600;}
+  .lb-row .lb-amount{font-family:'Space Mono';font-size:13px;color:var(--yellow);flex:0 0 auto;}
+  .lb-row.lb-real{background:rgba(61,220,132,0.06);}
+  .lb-podium-item.lb-real{box-shadow:0 0 0 1px var(--green) inset;}
+  .lb-tag{
+    display:inline-block;background:var(--green);color:var(--void);font-size:8.5px;font-weight:800;
+    padding:2px 6px;border-radius:3px;margin-left:5px;vertical-align:middle;letter-spacing:0.3px;
+  }
+  .screen.on{display:block;}
+
+  /* ===== Cek Transaksi ===== */
+  .tx-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+  .tx-list{display:flex;flex-direction:column;gap:12px;}
+  .tx-card{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    background:var(--surface);border:1px solid var(--hairline-soft);padding:16px 20px;
+  }
+  .tx-info h4{font-size:14px;font-weight:700;}
+  .tx-info .tx-meta{font-size:11px;color:var(--muted);margin-top:4px;}
+  .tx-right{text-align:right;flex:0 0 auto;}
+  .tx-amount{font-family:'Space Mono';font-size:15px;color:var(--yellow);margin-bottom:6px;}
+  .tx-badge{font-size:10.5px;font-weight:700;padding:4px 10px;display:inline-block;letter-spacing:0.2px;}
+  .tx-badge.pending{background:rgba(242,245,44,0.12);color:var(--yellow);border:1px solid var(--hairline);}
+  .tx-badge.paid{background:rgba(61,220,132,0.12);color:var(--green);border:1px solid rgba(61,220,132,0.3);}
+  .tx-badge.cancelled{background:rgba(255,61,110,0.1);color:var(--magenta);border:1px solid rgba(255,61,110,0.3);}
+  .tx-pay-btn{
+    display:block;margin-top:8px;background:var(--yellow);color:var(--void);font-weight:800;
+    font-size:11px;padding:7px 14px;border:none;width:100%;
+  }
+
+  /* ===== Poin RizPoint ===== */
+  .poin-card{
+    background:linear-gradient(135deg,var(--surface-hi),var(--surface));border:1px solid var(--hairline);
+    padding:36px;text-align:center;margin-bottom:28px;
+  }
+  .poin-label{font-size:12px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+  .poin-value{font-family:'Chakra Petch';font-size:52px;font-weight:700;color:var(--yellow);margin:8px 0;}
+  .poin-sub{font-size:12px;color:var(--muted);}
+  .poin-info h4{font-family:'Chakra Petch';font-size:15px;margin-bottom:10px;}
+  .poin-info ul{margin:0 0 24px;padding-left:18px;}
+  .poin-info li{font-size:13px;color:var(--muted);line-height:1.8;}
+  .poin-info li b{color:var(--text);}
+  .poin-note{font-size:12px;color:var(--muted);background:var(--surface);border:1px dashed var(--hairline);padding:12px 16px;}
+
+  /* ===== Pusat Bantuan ===== */
+  .faq-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+  .faq-item{background:var(--surface);border:1px solid var(--hairline-soft);}
+  .faq-q{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+    cursor:pointer;font-size:14px;font-weight:700;
+  }
+  .faq-q .chev{color:var(--yellow);transition:transform .2s ease;font-size:12px;}
+  .faq-item.open .faq-q .chev{transform:rotate(180deg);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .faq-item.open .faq-a{max-height:200px;}
+  .faq-a p{font-size:13px;color:var(--muted);line-height:1.6;padding:0 20px 16px;}
+  .help-contact{background:var(--surface);border:1px solid var(--hairline-soft);padding:20px;}
+  .help-contact h4{font-family:'Chakra Petch';font-size:14px;margin-bottom:6px;}
+  .help-contact p{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .help-contact-row{display:flex;gap:24px;font-size:13px;font-weight:600;flex-wrap:wrap;}
+
+  /* ===== HERO ===== */
+  .hero-carousel{
+    margin-top:26px;position:relative;overflow:hidden;border:1px solid var(--hairline);
+  }
+  .hero-track{display:flex;width:300%;transition:transform .5s cubic-bezier(.4,0,.2,1);}
+  .hero-slide{
+    width:33.3333%;flex:0 0 auto;padding:52px 56px;position:relative;overflow:hidden;
+    background-size:cover;background-position:center;min-height:340px;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .hero-slide:before{
+    content:"";position:absolute;right:-60px;top:-60px;width:340px;height:340px;
+    background:radial-gradient(circle,rgba(242,245,44,0.16) 0%,transparent 70%);
+  }
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;background:rgba(242,245,44,0.1);
+    border:1px solid var(--hairline);padding:6px 14px;font-size:11px;font-weight:700;
+    letter-spacing:1.2px;color:var(--yellow);margin-bottom:20px;width:fit-content;position:relative;z-index:2;
+  }
+  .hero-slide h1{font-size:44px;line-height:1.08;max-width:560px;font-weight:700;position:relative;z-index:2;}
+  .hero-slide h1 em{font-style:normal;color:var(--yellow);}
+  .hero-slide p{color:var(--muted);max-width:460px;margin-top:16px;font-size:15px;line-height:1.6;position:relative;z-index:2;}
+  .hero-actions{display:flex;gap:14px;margin-top:30px;position:relative;z-index:2;}
+  .hero-arrow{
+    position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;
+    background:rgba(26,22,31,0.65);border:1px solid var(--hairline-soft);color:var(--text);
+    font-size:20px;display:flex;align-items:center;justify-content:center;z-index:5;line-height:1;
+  }
+  .hero-arrow:hover{background:rgba(26,22,31,0.9);border-color:var(--hairline);}
+  .hero-arrow-prev{left:14px;}
+  .hero-arrow-next{right:14px;}
+  .hero-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5;
+    background:rgba(10,8,13,0.4);padding:6px 10px;border-radius:20px;}
+  .hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);border:none;padding:0;cursor:pointer;}
+  .hero-dot.on{background:var(--yellow);width:22px;border-radius:4px;transition:width .25s ease;}
+  .hero-stats{display:flex;gap:36px;margin-top:28px;}
+  .hero-stats div b{display:block;font-family:'Space Mono',monospace;font-size:22px;color:var(--yellow);}
+  .hero-stats div span{font-size:11px;color:var(--muted);letter-spacing:0.4px;}
+
+  /* ===== Category chips ===== */
+  .chiprow{display:flex;gap:10px;margin-top:40px;overflow-x:auto;padding-bottom:6px;}
+  .chip{
+    flex:0 0 auto;background:var(--surface);border:1px solid var(--hairline-soft);
+    padding:9px 18px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;
+  }
+  .chip.on{background:var(--yellow);color:var(--void);border-color:var(--yellow);font-weight:700;}
+
+  /* ===== Section heading ===== */
+  .sechead{display:flex;align-items:baseline;justify-content:space-between;margin:44px 0 20px;}
+  .sechead h2{font-family:'Chakra Petch',sans-serif;font-size:21px;font-weight:600;}
+  .sechead h2 small{display:block;font-family:'Plus Jakarta Sans';font-size:12px;color:var(--muted);font-weight:500;margin-top:3px;}
+  .sechead a{font-size:12px;color:var(--yellow);font-weight:700;}
+
+  /* ===== Game grid ===== */
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;}
+  .game-card{
+    background:var(--surface);border:1px solid var(--hairline-soft);overflow:hidden;
+    transition:border-color .15s, transform .15s;cursor:pointer;
+  }
+  .game-card:hover{border-color:var(--hairline);transform:translateY(-3px);}
+  .game-thumb{
+    aspect-ratio:1/1;background:linear-gradient(135deg,#3a2f4a,#241c30);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .game-thumb .glyph{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:rgba(242,245,44,0.85);}
+  .thumb-img{width:100%;height:100%;object-fit:cover;display:block;}
+  .game-thumb .glyph svg{width:100%;height:100%;}
+  .badge{
+    position:absolute;top:8px;left:8px;font-size:9px;font-weight:800;letter-spacing:0.4px;
+    padding:4px 7px;background:var(--magenta);color:#fff;
+  }
+  .badge.green{background:var(--green);color:var(--void);}
+  .game-info{padding:11px 12px 13px;}
+  .game-info h4{font-size:13px;font-weight:700;}
+  .game-info span{font-size:11px;color:var(--muted);}
+
+  /* ===== TOP UP SCREEN ===== */
+  .breadcrumb{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-top:24px;}
+  .breadcrumb .yellow{color:var(--yellow);}
+  .topup-layout{display:grid;grid-template-columns:1fr 360px;gap:32px;margin-top:22px;align-items:start;}
+
+  .game-header{
+    display:flex;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--hairline-soft);
+    padding:20px;margin-bottom:28px;
+  }
+  .game-header .thumb{width:64px;height:64px;background:linear-gradient(135deg,#3a2f4a,#241c30);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .game-header .thumb span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--yellow);}
+  .game-header .thumb span svg{width:52%;height:52%;}
+  .game-header h3{font-family:'Chakra Petch';font-size:19px;}
+  .game-header p{font-size:12px;color:var(--muted);margin-top:4px;}
+
+  .field-block{margin-bottom:26px;}
+  .field-block label{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.4px;margin-bottom:10px;text-transform:uppercase;}
+  .field-row{display:flex;gap:12px;}
+  .field{
+    flex:1;min-width:0;background:var(--surface);border:1px solid var(--hairline-soft);
+    padding:14px 16px;font-size:14px;color:var(--text);
+  }
+  .field::placeholder{color:#5c5468;}
+  .field-check{
+    margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green);
+  }
+
+  .denom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .denom-card{
+    position:relative;background:var(--surface);border:1px solid var(--hairline-soft);padding:16px 14px 14px;
+    text-align:left;color:var(--text);
+  }
+  .denom-card.selected{border-color:var(--yellow);background:var(--surface-hi);box-shadow:0 0 0 1px var(--yellow) inset;}
+  .denom-card .amt{font-family:'Chakra Petch';font-weight:700;font-size:15px;}
+  .denom-card .amt .unit{font-size:11px;color:var(--muted);font-weight:500;}
+  .denom-card .price{font-family:'Space Mono';font-size:13px;color:var(--yellow);margin-top:8px;display:block;}
+  .denom-card .old{font-size:10px;color:var(--muted);text-decoration:line-through;margin-right:6px;}
+  .denom-badge{
+    position:absolute;top:-1px;right:-1px;font-size:9px;font-weight:800;letter-spacing:0.3px;
+    padding:4px 8px;background:var(--magenta);color:#fff;
+  }
+  .denom-badge.special{background:linear-gradient(90deg,var(--yellow),#fff44a);color:var(--void);}
+
+  /* ===== Order summary sidebar ===== */
+  .summary{background:var(--surface);border:1px solid var(--hairline-soft);padding:24px;position:sticky;top:96px;}
+  .summary h4{font-family:'Chakra Petch';font-size:14px;letter-spacing:0.3px;margin-bottom:18px;color:var(--muted);text-transform:uppercase;}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:9px 0;border-bottom:1px solid var(--hairline-soft);}
+  .summary-row span:first-child{color:var(--muted);}
+  .summary-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;}
+  .voucher-apply{display:flex;gap:8px;margin-top:14px;}
+  .voucher-apply input{
+    flex:1;min-width:0;background:var(--surface-hi);border:1px dashed var(--hairline);
+    padding:9px 10px;font-size:12px;color:var(--text);font-family:'Space Mono';
+  }
+  .voucher-apply input::placeholder{color:var(--muted);font-family:'Plus Jakarta Sans';}
+  .voucher-apply button{
+    background:var(--surface-raised);border:1px solid var(--hairline-soft);color:var(--yellow);
+    font-size:12px;font-weight:700;padding:0 16px;white-space:nowrap;
+  }
+  .voucher-apply-msg{font-size:11px;margin-top:6px;min-height:14px;}
+  .voucher-apply-msg.ok{color:var(--green);}
+  .voucher-apply-msg.err{color:var(--magenta);}
+  .summary-total b{font-family:'Space Mono';font-size:21px;color:var(--yellow);}
+  .summary .btn-primary{width:100%;margin-top:20px;text-align:center;padding:14px;font-size:14px;}
+
+  /* ===== PAYMENT SCREEN ===== */
+  .pay-layout{display:grid;grid-template-columns:1fr 360px;gap:32px;margin-top:22px;align-items:start;}
+  .pay-group{margin-bottom:28px;}
+  .pay-group-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:12px;}
+  .pay-option{
+    display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--hairline-soft);
+    padding:16px 18px;margin-bottom:10px;cursor:pointer;
+  }
+  .pay-option.selected{border-color:var(--yellow);background:var(--surface-hi);}
+  .pay-radio{width:18px;height:18px;border:2px solid var(--muted);border-radius:50%;flex:0 0 auto;position:relative;}
+  .pay-option.selected .pay-radio{border-color:var(--yellow);}
+  .pay-option.selected .pay-radio:after{content:"";position:absolute;inset:3px;background:var(--yellow);border-radius:50%;}
+  .pay-glyph{
+    width:38px;height:38px;background:var(--surface-hi);display:flex;align-items:center;justify-content:center;
+    font-family:'Chakra Petch';font-weight:700;font-size:11px;color:var(--yellow);flex:0 0 auto;
+  }
+  .pay-name{font-size:14px;font-weight:700;flex:1;}
+  .pay-name small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;}
+  .pay-tag{font-size:9px;font-weight:800;letter-spacing:0.3px;background:var(--green);color:var(--void);padding:4px 8px;}
+  .pay-fee{font-family:'Space Mono';font-size:12px;color:var(--muted);}
+
+  /* ===== Nav drawer ===== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,8,13,0.7);z-index:90;display:none;
+  }
+  .overlay.on{display:block;}
+  .drawer{
+    position:fixed;top:0;left:0;bottom:0;width:300px;background:var(--surface);
+    border-right:1px solid var(--hairline);z-index:91;transform:translateX(-100%);transition:transform .25s ease;
+    display:flex;flex-direction:column;
+  }
+  .drawer.on{transform:translateX(0);}
+  .drawer-head{padding:24px 22px;border-bottom:1px solid var(--hairline-soft);display:flex;justify-content:space-between;align-items:center;}
+  .drawer-user{display:flex;gap:12px;align-items:center;padding:20px 22px;border-bottom:1px solid var(--hairline-soft);}
+  .avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--yellow),#c9cc22);flex:0 0 auto;
+    clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);}
+  .drawer-user h5{font-size:14px;font-weight:700;}
+  .drawer-user span{font-size:11px;color:var(--muted);}
+  .drawer-menu{padding:14px 10px;flex:1;}
+  .drawer-menu a{
+    display:flex;align-items:center;gap:12px;padding:13px 12px;font-size:14px;font-weight:600;color:var(--muted);
+  }
+  .drawer-menu a:hover{color:var(--text);background:var(--surface-raised);}
+  .drawer-menu a.active{color:var(--yellow);}
+  .drawer-menu .glyph{width:20px;text-align:center;color:var(--yellow);font-family:'Space Mono';font-size:12px;}
+  .drawer-foot{padding:18px 22px;border-top:1px solid var(--hairline-soft);font-size:11px;color:var(--muted);}
+  .close-x{width:32px;height:32px;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);border:none;}
+
+  /* ===== Modal Masuk / Daftar ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(10,8,13,0.75);z-index:100;display:none;}
+  .modal-overlay.on{display:block;}
+  .modal{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.96);
+    width:380px;max-width:calc(100% - 40px);background:var(--surface);border:1px solid var(--hairline);
+    z-index:101;padding:26px;display:none;opacity:0;transition:opacity .18s ease, transform .18s ease;
+  }
+  .modal.on{display:block;opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .modal-head h3{font-family:'Chakra Petch';font-size:18px;}
+  .modal .field-block{margin-bottom:14px;}
+  .modal .field-block label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.4px;margin-bottom:7px;text-transform:uppercase;}
+  .auth-error{color:var(--magenta);font-size:12px;margin-bottom:12px;display:none;}
+  .auth-error.on{display:block;}
+  .auth-switch{text-align:center;font-size:12px;color:var(--muted);margin-top:16px;}
+  .auth-switch a{color:var(--yellow);font-weight:700;}
+  .user-chip{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hairline-soft);padding:7px 14px 7px 7px;}
+  .user-chip .avatar-sm{width:28px;height:28px;background:linear-gradient(135deg,var(--yellow),#c9cc22);flex:0 0 auto;
+    clip-path:polygon(0 6px,6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);}
+  .user-chip span{font-size:13px;font-weight:700;}
+  .user-chip button{background:transparent;border:none;color:var(--muted);font-size:11px;font-weight:700;margin-left:4px;}
+  .user-chip button:hover{color:var(--magenta);}
+
+  @media(max-width:1000px){
+    .grid{grid-template-columns:repeat(3,1fr);}
+    .topup-layout,.pay-layout{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" data-action="close-drawer"></div>
+<nav class="drawer" id="drawer">
+  <div class="drawer-head">
+    <img src="assets/logo.png" alt="Rizpedia" class="logo-img">
+    <button class="close-x" data-action="close-drawer">✕</button>
+  </div>
+  <div class="drawer-user">
+    <div class="avatar"></div>
+    <div><h5>Halo, Kawan Riz</h5><span>+62 812-xxxx-xxxx</span></div>
+  </div>
+  <div class="drawer-menu">
+    <a href="#" data-action="show-screen" data-screen="home"><span class="glyph">◆</span> Beranda</a>
+    <a href="#" data-action="show-screen" data-screen="transaksi"><span class="glyph">▤</span> Cek Transaksi</a>
+    <a href="#" data-action="show-screen" data-screen="leaderboard"><span class="glyph">▲</span> Leaderboard Top Up</a>
+    <a href="#" data-action="show-screen" data-screen="voucher"><span class="glyph">✦</span> Promo & Voucher</a>
+    <a href="#" data-action="show-screen" data-screen="poin"><span class="glyph">◈</span> Poin RizPoint</a>
+    <a href="#" data-action="show-screen" data-screen="bantuan"><span class="glyph">?</span> Pusat Bantuan</a>
+  </div>
+  <div class="drawer-foot">Rizpedia v1.0 — Top up cepat, harga jujur.</div>
+</nav>
+
+<div class="app">
+
+  <div class="topnav">
+    <button class="burger" data-action="open-drawer"><span></span><span></span><span></span></button>
+    <img src="assets/logo.png" alt="Rizpedia" class="logo-img" data-action="show-screen" data-screen="home" style="cursor:pointer;">
+    <div class="navlinks">
+      <a href="#" class="active" data-action="show-screen" data-screen="home">Beranda</a>
+      <a href="#" data-action="show-screen" data-screen="voucher">Voucher</a>
+      <a href="#" data-action="show-screen" data-screen="leaderboard">Leaderboard</a>
+      <a href="#" data-action="show-screen" data-screen="transaksi">Cek Transaksi</a>
+    </div>
+    <div class="searchbar">
+      <span>⌕</span>
+      <input type="text" id="search-input" placeholder='Cari game, mis. "Mobile Legends"'>
+    </div>
+    <div class="navcta" id="navcta">
+      <div class="notif-wrap">
+        <button class="icon-btn" id="notif-bell">🔔<span class="dot" id="notif-dot" style="display:none;"></span></button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-head">Notifikasi</div>
+          <div class="notif-list" id="notif-list"></div>
+        </div>
+      </div>
+      <button class="btn-ghost" data-action="open-auth" data-mode="login">Masuk</button>
+      <button class="btn-primary" data-action="open-auth" data-mode="register">Daftar</button>
+    </div>
+  </div>
+
+
+  <!-- ================= SCREEN 1: HOME ================= -->
+  <section class="screen on" id="screen-home">
+    <div class="hero-carousel" id="hero-carousel">
+      <div class="hero-track" id="hero-track">
+        <!-- SLIDE 1: gambar sudah ada teksnya sendiri, jadi tidak pakai overlay teks -->
+        <div class="hero-slide" style="background-image:url('assets/welcome-desktop.jpg');"></div>
+        <!-- SLIDE 2 -->
+        <div class="hero-slide" style="background-image:url('assets/slide2-desktop.jpg');">
+          <div class="hero-eyebrow">🎁 KHUSUS MEMBER BARU</div>
+          <h1>Daftar sekarang,<br><em>cashback 10%.</em></h1>
+          <p>Cashback otomatis untuk transaksi pertamamu, berlaku buat semua game dan voucher di Rizpedia.</p>
+          <div class="hero-actions">
+            <button class="btn-primary" data-action="open-auth" data-mode="register">Daftar Sekarang →</button>
+          </div>
+        </div>
+        <!-- SLIDE 3 -->
+        <div class="hero-slide" style="background-image:url('assets/slide3-desktop.jpg');">
+          <div class="hero-eyebrow">👥 AJAK TEMAN</div>
+          <h1>Undang teman,<br><em>panen diamond gratis.</em></h1>
+          <p>Setiap teman yang top up pertama kali pakai kode kamu, kalian berdua langsung dapat bonus diamond.</p>
+          <div class="hero-actions">
+            <button class="btn-primary">Lihat Cara Kerja →</button>
+          </div>
+        </div>
+      </div>
+      <button class="hero-arrow hero-arrow-prev" data-action="hero-prev" aria-label="Slide sebelumnya">‹</button>
+      <button class="hero-arrow hero-arrow-next" data-action="hero-next" aria-label="Slide berikutnya">›</button>
+      <div class="hero-dots">
+        <button class="hero-dot on" data-slide="0" aria-label="Slide 1"></button>
+        <button class="hero-dot" data-slide="1" aria-label="Slide 2"></button>
+        <button class="hero-dot" data-slide="2" aria-label="Slide 3"></button>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div><b>2.4jt+</b><span>TRANSAKSI SUKSES</span></div>
+      <div><b>210+</b><span>GAME TERSEDIA</span></div>
+      <div><b>&lt;30dtk</b><span>RATA-RATA PROSES</span></div>
+    </div>
+
+    <div class="chiprow">
+      <div class="chip on" data-filter="semua">Semua</div>
+      <div class="chip" data-filter="mobile">Mobile Game</div>
+      <div class="chip" data-filter="pc">PC Game</div>
+      <div class="chip" data-filter="voucher">Voucher</div>
+      <div class="chip" data-filter="pulsa">Pulsa & Data</div>
+      <div class="chip" data-filter="tagihan">Tagihan</div>
+    </div>
+
+    <div class="sechead">
+      <h2>Paling Diburu<small>Update harga tiap jam</small></h2>
+      <a href="#" data-action="show-all">Lihat semua →</a>
+    </div>
+    <div class="grid">
+      <div class="game-card" data-game-code="MLBB" data-category="mobile" data-game-title="Mobile Legends: Bang Bang" data-game-desc="Diamond resmi · Proses instan 24 jam"><div class="game-thumb"><span class="badge">FLASH SALE</span><span class="glyph"><img src="assets/games/mlbb.jpg" alt="Mobile Legends" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Mobile Legends</h4><span>Diamond</span></div></div>
+      <div class="game-card" data-game-code="FF" data-category="mobile" data-game-title="Free Fire" data-game-desc="Diamond resmi · Proses instan 24 jam"><div class="game-thumb"><span class="badge green">TERLARIS</span><span class="glyph"><img src="assets/games/ff.jpg" alt="Free Fire" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Free Fire</h4><span>Diamond</span></div></div>
+      <div class="game-card" data-game-code="PUBG" data-category="mobile" data-game-title="PUBG Mobile" data-game-desc="UC resmi · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/pubg.jpg" alt="PUBG Mobile" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>PUBG Mobile</h4><span>UC</span></div></div>
+      <div class="game-card" data-game-code="GI" data-category="mobile" data-game-title="Genshin Impact" data-game-desc="Genesis Crystal · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/gi.jpg" alt="Genshin Impact" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Genshin Impact</h4><span>Genesis Crystal</span></div></div>
+      <div class="game-card" data-game-code="VAL" data-category="pc" data-game-title="Valorant" data-game-desc="VP Points · Proses instan 24 jam"><div class="game-thumb"><span class="badge">BARU</span><span class="glyph"><img src="assets/games/val.jpg" alt="Valorant" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Valorant</h4><span>VP Points</span></div></div>
+      <div class="game-card" data-game-code="RBX" data-category="mobile" data-game-title="Roblox" data-game-desc="Robux · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/rbx.jpg" alt="Roblox" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Roblox</h4><span>Robux</span></div></div>
+    </div>
+
+    <div class="sechead">
+      <h2>Voucher & Pulsa<small>Kebutuhan harian, harga hemat</small></h2>
+      <a href="#" data-action="show-all">Lihat semua →</a>
+    </div>
+    <div class="grid">
+      <div class="game-card" data-game-code="GPL" data-category="voucher" data-game-title="Google Play" data-game-desc="Voucher resmi · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/gpl.jpg" alt="Google Play" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Google Play</h4><span>Voucher</span></div></div>
+      <div class="game-card" data-game-code="STM" data-category="voucher" data-game-title="Steam Wallet" data-game-desc="Voucher resmi · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/stm.jpg" alt="Steam Wallet" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Steam Wallet</h4><span>Voucher</span></div></div>
+      <div class="game-card" data-game-code="TSL" data-category="pulsa" data-game-title="Telkomsel" data-game-desc="Pulsa & Data · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/tsl.jpg" alt="Telkomsel" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Telkomsel</h4><span>Pulsa & Data</span></div></div>
+      <div class="game-card" data-game-code="PLN" data-category="tagihan" data-game-title="PLN Token" data-game-desc="Token Listrik · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/pln.jpg" alt="PLN Token" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>PLN Token</h4><span>Listrik</span></div></div>
+      <div class="game-card" data-game-code="XL" data-category="pulsa" data-game-title="XL Axiata" data-game-desc="Pulsa & Data · Proses instan 24 jam"><div class="game-thumb"><span class="glyph"><img src="assets/games/xl.jpg" alt="XL Axiata" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>XL Axiata</h4><span>Pulsa & Data</span></div></div>
+      <div class="game-card" data-game-code="SPT" data-category="voucher" data-game-title="Spotify Premium" data-game-desc="Langganan Musik · Proses instan"><div class="game-thumb"><span class="glyph"><img src="assets/games/spt.jpg" alt="Spotify" class="thumb-img" loading="lazy"></span></div><div class="game-info"><h4>Spotify</h4><span>Premium</span></div></div>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 2: TOP UP ================= -->
+  <section class="screen" id="screen-topup">
+    <div class="breadcrumb">Beranda <span>›</span> Mobile Game <span>›</span> <span class="yellow" id="topup-crumb">Mobile Legends</span></div>
+
+    <div class="topup-layout">
+      <div>
+        <div class="game-header">
+          <div class="thumb"><span id="topup-code"><img src="assets/games/mlbb.jpg" alt="Mobile Legends" class="thumb-img"></span></div>
+          <div>
+            <h3 id="topup-title">Mobile Legends: Bang Bang</h3>
+            <p id="topup-desc">Diamond resmi · Proses instan 24 jam</p>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <label>1 · Masukkan Data Akun</label>
+          <div class="field-row">
+            <input class="field" placeholder="User ID" style="flex:2">
+            <input class="field" placeholder="Zone ID" style="flex:1">
+          </div>
+          <div class="field-check">✓ Nickname ditemukan: <b style="color:var(--text)">&nbsp;RizGamer99</b></div>
+        </div>
+
+        <div class="field-block">
+          <label>2 · Pilih Nominal</label>
+          <div class="denom-grid" id="denom-grid"></div>
+        </div>
+      </div>
+
+      <aside class="summary">
+        <h4>Ringkasan Pesanan</h4>
+        <div class="summary-row"><span>Produk</span><span id="cart-product">172 Diamond</span></div>
+        <div class="summary-row"><span>User ID</span><span>8812340 (1234)</span></div>
+        <div class="summary-row"><span>Nickname</span><span>RizGamer99</span></div>
+        <div class="voucher-apply">
+          <input type="text" id="cart-voucher-input" placeholder="Kode voucher (opsional)">
+          <button type="button" id="cart-voucher-btn">Pakai</button>
+        </div>
+        <div class="voucher-apply-msg" id="cart-voucher-msg"></div>
+        <div class="summary-row" id="cart-discount-row" style="display:none;"><span>Diskon Voucher</span><span id="cart-discount-value">-Rp 0</span></div>
+        <div class="summary-total"><span style="font-size:12px;color:var(--muted)">Total Bayar</span><b id="cart-price">Rp 40.500</b></div>
+        <button class="btn-primary" data-action="show-screen" data-screen="pay">Lanjut ke Pembayaran →</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 3: PAYMENT ================= -->
+  <section class="screen" id="screen-pay">
+    <div class="breadcrumb">Top Up <span>›</span> Mobile Legends <span>›</span> <span class="yellow">Pembayaran</span></div>
+
+    <div class="pay-layout">
+      <div>
+        <div class="pay-group">
+          <div class="pay-group-title">QRIS</div>
+          <div class="pay-option selected">
+            <div class="pay-radio"></div>
+            <div class="pay-glyph">QR</div>
+            <div class="pay-name">QRIS — Semua E-Wallet & Bank<small>Scan sekali, bayar dari aplikasi apa saja</small></div>
+            <span class="pay-tag">HARGA TERBAIK</span>
+          </div>
+        </div>
+
+        <div class="pay-group">
+          <div class="pay-group-title">E-Wallet</div>
+          <div class="pay-option">
+            <div class="pay-radio"></div><div class="pay-glyph">OVO</div>
+            <div class="pay-name">OVO<small>Saldo langsung terpotong</small></div>
+            <span class="pay-fee">+Rp 1.000</span>
+          </div>
+          <div class="pay-option">
+            <div class="pay-radio"></div><div class="pay-glyph">DNA</div>
+            <div class="pay-name">DANA<small>Saldo langsung terpotong</small></div>
+            <span class="pay-fee">+Rp 1.000</span>
+          </div>
+          <div class="pay-option">
+            <div class="pay-radio"></div><div class="pay-glyph">GPY</div>
+            <div class="pay-name">GoPay<small>Saldo langsung terpotong</small></div>
+            <span class="pay-fee">+Rp 1.500</span>
+          </div>
+        </div>
+
+        <div class="pay-group">
+          <div class="pay-group-title">Virtual Account</div>
+          <div class="pay-option">
+            <div class="pay-radio"></div><div class="pay-glyph">BCA</div>
+            <div class="pay-name">BCA Virtual Account<small>Transfer via m-Banking / ATM</small></div>
+            <span class="pay-fee">+Rp 2.500</span>
+          </div>
+          <div class="pay-option">
+            <div class="pay-radio"></div><div class="pay-glyph">BRI</div>
+            <div class="pay-name">BRI Virtual Account<small>Transfer via m-Banking / ATM</small></div>
+            <span class="pay-fee">+Rp 2.500</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="summary">
+        <h4>Total Pembayaran</h4>
+        <div class="summary-row"><span id="pay-product">172 Diamond</span><span id="pay-price-row">Rp 40.500</span></div>
+        <div class="summary-row"><span>Biaya Layanan</span><span>Rp 0</span></div>
+        <div class="voucher-apply">
+          <input type="text" id="pay-voucher-input" placeholder="Kode voucher (opsional)">
+          <button type="button" id="pay-voucher-btn">Pakai</button>
+        </div>
+        <div class="voucher-apply-msg" id="pay-voucher-msg"></div>
+        <div class="summary-row" id="pay-discount-row" style="display:none;"><span>Diskon Voucher</span><span id="pay-discount-value">-Rp 0</span></div>
+        <div class="summary-total"><span style="font-size:12px;color:var(--muted)">Total</span><b id="pay-price">Rp 40.500</b></div>
+        <button class="btn-primary" id="pay-submit-btn">Bayar Sekarang →</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 4: VOUCHER ================= -->
+  <section class="screen" id="screen-voucher">
+    <div class="voucher-head">
+      <div>
+        <h2>Promo & Voucher</h2>
+        <p>Klaim voucher aktif, atau kocok ulang buat lihat kombinasi baru</p>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn-ghost" id="voucher-shuffle">🎲 Kocok Ulang</button>
+        <div class="voucher-shuffle-info" id="voucher-shuffle-info"></div>
+      </div>
+    </div>
+    <div class="voucher-locked" id="voucher-locked">
+      <p>Masuk dulu untuk mengocok dan mengklaim voucher — tiap akun dapat <b>2 kali kesempatan kocok</b>.</p>
+      <button class="btn-primary" data-action="open-auth" data-mode="login">Masuk Sekarang</button>
+    </div>
+    <div class="voucher-grid" id="voucher-grid"></div>
+    <div class="voucher-wallet-head" id="voucher-wallet-head">Voucher Saya (siap dipakai saat checkout)</div>
+    <div class="voucher-wallet" id="voucher-wallet"></div>
+  </section>
+
+  <!-- ================= SCREEN 5: LEADERBOARD ================= -->
+  <section class="screen" id="screen-leaderboard">
+    <div class="voucher-head">
+      <div>
+        <h2>Leaderboard Top Up</h2>
+        <p>Peringkat total top up minggu ini — diperbarui berkala</p>
+      </div>
+      <button class="btn-ghost" id="leaderboard-shuffle">🔄 Perbarui</button>
+    </div>
+    <div class="lb-podium" id="lb-podium"></div>
+    <div class="lb-list" id="lb-list"></div>
+  </section>
+
+  <!-- ================= SCREEN 6: CEK TRANSAKSI ================= -->
+  <section class="screen" id="screen-transaksi">
+    <div class="voucher-head">
+      <div>
+        <h2>Transaksi Saya</h2>
+        <p>Pesanan yang belum dibayar otomatis dibatalkan kalau lewat 5 menit</p>
+      </div>
+    </div>
+    <div class="tx-list" id="tx-list"></div>
+  </section>
+
+  <!-- ================= SCREEN 7: POIN RIZPOINT ================= -->
+  <section class="screen" id="screen-poin">
+    <div class="voucher-head">
+      <div>
+        <h2>Poin RizPoint</h2>
+        <p>Kumpulkan poin dari setiap top up yang berhasil, tukar jadi diskon</p>
+      </div>
+    </div>
+    <div class="poin-card">
+      <div class="poin-label">Total Poin Kamu</div>
+      <div class="poin-value" id="poin-value">0</div>
+      <div class="poin-sub" id="poin-sub">Masuk dulu untuk mulai kumpulin poin</div>
+    </div>
+    <div class="poin-info">
+      <h4>Cara dapat poin</h4>
+      <ul>
+        <li>Setiap top up yang <b>berhasil dibayar</b> otomatis dapat <b>1 poin per Rp1.000</b></li>
+        <li>Poin dihitung dari transaksi yang sudah lunas, bukan yang masih menunggu pembayaran</li>
+        <li>Poin tidak hangus dan tersimpan di akun kamu</li>
+      </ul>
+      <h4>Tukar poin</h4>
+      <p class="poin-note">Fitur tukar poin jadi voucher diskon sedang disiapkan. Sementara ini, pantau terus perolehan poinmu di sini.</p>
+    </div>
+  </section>
+
+  <!-- ================= SCREEN 8: PUSAT BANTUAN ================= -->
+  <section class="screen" id="screen-bantuan">
+    <div class="voucher-head">
+      <div>
+        <h2>Pusat Bantuan</h2>
+        <p>Pertanyaan yang sering ditanyakan seputar Rizpedia</p>
+      </div>
+    </div>
+    <div class="faq-list" id="faq-list"></div>
+    <div class="help-contact">
+      <h4>Masih butuh bantuan?</h4>
+      <p>Tim kami siap bantu kalau FAQ di atas belum menjawab pertanyaanmu.</p>
+      <div class="help-contact-row">
+        <span>📧 support@rizpedia.id</span>
+        <span>💬 WhatsApp: 0812-xxxx-xxxx</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== Modal Masuk / Daftar ===== -->
+<div class="modal-overlay" id="auth-overlay"></div>
+<div class="modal" id="auth-modal">
+  <div class="modal-head">
+    <h3 id="auth-title">Masuk ke Rizpedia</h3>
+    <button class="close-x" data-action="close-auth">✕</button>
+  </div>
+  <form id="auth-form">
+    <div class="field-block" id="auth-name-block" style="display:none;">
+      <label>Nama Lengkap</label>
+      <input class="field" type="text" id="auth-name" placeholder="Nama kamu">
+    </div>
+    <div class="field-block">
+      <label>Email atau Nomor HP</label>
+      <input class="field" type="text" id="auth-contact" placeholder="nama@email.com">
+    </div>
+    <div class="field-block">
+      <label>Kata Sandi</label>
+      <input class="field" type="password" id="auth-password" placeholder="Minimal 6 karakter">
+    </div>
+    <div class="field-block" id="auth-password2-block" style="display:none;">
+      <label>Ulangi Kata Sandi</label>
+      <input class="field" type="password" id="auth-password2" placeholder="Ulangi kata sandi">
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button type="submit" class="btn-primary" id="auth-submit" style="width:100%;">Masuk</button>
+  </form>
+  <p class="auth-switch">
+    <span id="auth-switch-text">Belum punya akun?</span>
+    <a href="#" id="auth-switch-link" data-action="switch-auth">Daftar di sini</a>
+  </p>
+</div>
+
+<script>
+// Data harga cadangan (dipakai kalau file ini dibuka langsung tanpa backend aktif).
+// Kalau backend Node menyala, fetch('/api/games') akan menimpa data ini dengan data terbaru dari backend/data/games.js
+const FALLBACK_GAMES = {
+  MLBB: { unit:'Diamond', denoms:[
+    {amt:86, price:23000},
+    {amt:172, price:40500, old:45000, badge:'FLASH SALE'},
+    {amt:257, price:67500},
+    {amt:565, price:150000},
+    {amt:878, price:218500},
+    {amt:'Starlight', unit:'Member', price:149000, badge:'SPECIAL', special:true},
+  ]},
+  FF: { unit:'Diamond', denoms:[
+    {amt:25, price:3500},
+    {amt:100, price:14000},
+    {amt:210, price:25500, old:27600, badge:'FLASH SALE'},
+    {amt:355, price:46000},
+    {amt:1000, price:140000},
+    {amt:'Membership', unit:'Mingguan', price:30000, badge:'SPECIAL', special:true},
+  ]},
+  PUBG: { unit:'UC', denoms:[
+    {amt:60, price:15000},
+    {amt:325, price:69900, old:74900, badge:'FLASH SALE'},
+    {amt:660, price:149800},
+    {amt:1800, price:374500},
+    {amt:3850, price:740000},
+    {amt:'Royal Pass', unit:'', price:149000, badge:'SPECIAL', special:true},
+  ]},
+  GI: { unit:'Genesis Crystal', denoms:[
+    {amt:60, price:16000},
+    {amt:300, price:49000},
+    {amt:980, price:159000, old:172000, badge:'FLASH SALE'},
+    {amt:1980, price:363000},
+    {amt:3280, price:589000},
+    {amt:'Blessing', unit:'Welkin Moon', price:79000, badge:'SPECIAL', special:true},
+  ]},
+  VAL: { unit:'VP', denoms:[
+    {amt:475, price:59000},
+    {amt:1000, price:109000, old:119000, badge:'FLASH SALE'},
+    {amt:2050, price:229000},
+    {amt:3650, price:399000},
+    {amt:5350, price:569000},
+    {amt:'Battle Pass', unit:'Bundle', price:149000, badge:'SPECIAL', special:true},
+  ]},
+  RBX: { unit:'Robux', denoms:[
+    {amt:80, price:15000},
+    {amt:400, price:69000, old:75000, badge:'FLASH SALE'},
+    {amt:800, price:150000},
+    {amt:1700, price:310000},
+    {amt:4500, price:780000},
+    {amt:'Roblox', unit:'Premium', price:99000, badge:'SPECIAL', special:true},
+  ]},
+  GPL: { unit:'', denoms:[
+    {amt:'Rp 12.000', unit:'', price:12500},
+    {amt:'Rp 60.000', unit:'', price:57000, old:60000, badge:'FLASH SALE'},
+    {amt:'Rp 100.000', unit:'', price:96500},
+    {amt:'Rp 300.000', unit:'', price:289000},
+    {amt:'Rp 500.000', unit:'', price:481000},
+    {amt:'Rp 1.000.000', unit:'', price:962000},
+  ]},
+  STM: { unit:'', denoms:[
+    {amt:'Rp 45.000', unit:'', price:44000},
+    {amt:'Rp 90.000', unit:'', price:85000, old:89000, badge:'FLASH SALE'},
+    {amt:'Rp 250.000', unit:'', price:238000},
+    {amt:'Rp 500.000', unit:'', price:476000},
+    {amt:'Rp 1.000.000', unit:'', price:952000},
+    {amt:'Rp 2.000.000', unit:'', price:1904000},
+  ]},
+  TSL: { unit:'', denoms:[
+    {amt:'Pulsa Rp5.000', unit:'', price:6500},
+    {amt:'Pulsa Rp10.000', unit:'', price:11500, old:12500, badge:'FLASH SALE'},
+    {amt:'Pulsa Rp25.000', unit:'', price:26500},
+    {amt:'Pulsa Rp50.000', unit:'', price:50500},
+    {amt:'Data 3GB/30hr', unit:'', price:35000},
+    {amt:'Data 10GB/30hr', unit:'', price:75000, badge:'SPECIAL', special:true},
+  ]},
+  PLN: { unit:'', denoms:[
+    {amt:'Token Rp20.000', unit:'', price:22500},
+    {amt:'Token Rp50.000', unit:'', price:52000, old:55000, badge:'FLASH SALE'},
+    {amt:'Token Rp100.000', unit:'', price:102500},
+    {amt:'Token Rp200.000', unit:'', price:202500},
+    {amt:'Token Rp500.000', unit:'', price:502500},
+    {amt:'Token Rp1.000.000', unit:'', price:1002500},
+  ]},
+  XL: { unit:'', denoms:[
+    {amt:'Pulsa Rp5.000', unit:'', price:6500},
+    {amt:'Pulsa Rp10.000', unit:'', price:11000, old:12000, badge:'FLASH SALE'},
+    {amt:'Pulsa Rp25.000', unit:'', price:25500},
+    {amt:'Data 2GB/30hr', unit:'', price:25000},
+    {amt:'Data 8GB/30hr', unit:'', price:55000},
+    {amt:'Data 25GB/30hr', unit:'', price:99000, badge:'SPECIAL', special:true},
+  ]},
+  SPT: { unit:'', denoms:[
+    {amt:'Individual', unit:'1 Bulan', price:54990},
+    {amt:'Individual', unit:'3 Bulan', price:149000, old:164970, badge:'FLASH SALE'},
+    {amt:'Duo', unit:'1 Bulan', price:71990},
+    {amt:'Family', unit:'1 Bulan', price:86900},
+    {amt:'Student', unit:'1 Bulan', price:27500},
+    {amt:'Individual', unit:'12 Bulan', price:599000, badge:'SPECIAL', special:true},
+  ]},
+};
+let GAMES = FALLBACK_GAMES;
+function loadGames(){
+  // Render dulu pakai data cadangan supaya langsung bisa dipakai tanpa nunggu backend
+  renderDenoms('MLBB');
+  // Coba ambil data terbaru dari backend (kalau server Node-nya aktif), timpa diam-diam kalau berhasil
+  fetch('/api/games')
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => { GAMES = data; renderDenoms(currentGame); })
+    .catch(() => { /* backend tidak aktif, tetap pakai data cadangan */ });
+}
+const fmt = n => 'Rp ' + n.toLocaleString('id-ID');
+let currentGame = 'MLBB', currentDenomIdx = 1;
+
+function openGame(code, title, desc){
+  appliedVoucher = null;
+  const cartMsg = document.getElementById('cart-voucher-msg');
+  const cartInput = document.getElementById('cart-voucher-input');
+  const payMsg = document.getElementById('pay-voucher-msg');
+  const payInput = document.getElementById('pay-voucher-input');
+  if(cartMsg){ cartMsg.textContent=''; cartMsg.className='voucher-apply-msg'; }
+  if(cartInput) cartInput.value='';
+  if(payMsg){ payMsg.textContent=''; payMsg.className='voucher-apply-msg'; }
+  if(payInput) payInput.value='';
+  document.getElementById('topup-code').innerHTML = `<img src="assets/games/${code.toLowerCase()}.jpg" alt="${title}" class="thumb-img">`;
+  document.getElementById('topup-title').textContent = title;
+  document.getElementById('topup-desc').textContent = desc;
+  document.getElementById('topup-crumb').textContent = title.split(':')[0];
+  renderDenoms(code);
+  showScreen('topup');
+}
+function renderDenoms(code){
+  currentGame = code;
+  const g = GAMES[code];
+  const grid = document.getElementById('denom-grid');
+  grid.innerHTML = '';
+  currentDenomIdx = g.denoms.findIndex(d=>d.badge==='FLASH SALE');
+  if(currentDenomIdx < 0) currentDenomIdx = 0;
+  g.denoms.forEach((d, i)=>{
+    const unit = d.unit !== undefined ? d.unit : g.unit;
+    const btn = document.createElement('button');
+    btn.className = 'denom-card' + (i===currentDenomIdx ? ' selected' : '');
+    btn.innerHTML = (d.badge ? `<span class="denom-badge${d.special?' special':''}">${d.badge}</span>` : '') +
+      `<div class="amt">${d.amt} ${unit?`<span class="unit">${unit}</span>`:''}</div>` +
+      `<span class="price">${d.old?`<span class="old">${fmt(d.old)}</span>`:''}${fmt(d.price)}</span>`;
+    btn.onclick = ()=>{
+      grid.querySelectorAll('.denom-card').forEach(x=>x.classList.remove('selected'));
+      btn.classList.add('selected');
+      currentDenomIdx = i;
+      updateCart();
+    };
+    grid.appendChild(btn);
+  });
+  updateCart();
+}
+function updateCart(){
+  const g = GAMES[currentGame];
+  const d = g.denoms[currentDenomIdx];
+  const unit = d.unit !== undefined ? d.unit : g.unit;
+  const label = `${d.amt}${unit?' '+unit:''}`;
+
+  // kalau voucher yang aktif jadi tidak memenuhi syarat minimal di produk/nominal baru, batalkan otomatis
+  if(appliedVoucher && d.price < appliedVoucher.min){
+    appliedVoucher = null;
+  }
+  const discount = appliedVoucher ? computeDiscount(appliedVoucher, d.price) : 0;
+  const total = Math.max(0, d.price - discount);
+
+  document.getElementById('cart-product').textContent = label;
+  document.getElementById('cart-price').textContent = fmt(total);
+  const cartDiscountRow = document.getElementById('cart-discount-row');
+  if(cartDiscountRow){
+    cartDiscountRow.style.display = discount > 0 ? 'flex' : 'none';
+    document.getElementById('cart-discount-value').textContent = '-' + fmt(discount);
+  }
+
+  const payProduct = document.getElementById('pay-product');
+  const payPriceRow = document.getElementById('pay-price-row');
+  const payPrice = document.getElementById('pay-price');
+  const payDiscountRow = document.getElementById('pay-discount-row');
+  if(payProduct){
+    payProduct.textContent = label;
+    payPriceRow.textContent = fmt(d.price);
+    payPrice.textContent = fmt(total);
+    if(payDiscountRow){
+      payDiscountRow.style.display = discount > 0 ? 'flex' : 'none';
+      document.getElementById('pay-discount-value').textContent = '-' + fmt(discount);
+    }
+  }
+}
+
+function showScreen(id, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('screen-'+id).classList.add('on');
+  // sinkronkan warna aktif (kuning) di navlink atas & menu drawer sesuai halaman yang sedang dibuka
+  document.querySelectorAll('.navlinks a[data-screen], .drawer-menu a[data-screen]').forEach(a=>{
+    a.classList.toggle('active', a.dataset.screen === id);
+  });
+  // render ulang langsung (jangan nunggu polling 1 detik) tiap kali pindah ke halaman transaksi/leaderboard/poin
+  if(id === 'transaksi' && typeof renderTransactions === 'function') renderTransactions();
+  if(id === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
+  if(id === 'poin' && typeof renderPoin === 'function') renderPoin();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleDrawer(open){
+  document.getElementById('drawer').classList.toggle('on', open);
+  document.getElementById('overlay').classList.toggle('on', open);
+}
+
+// ===== Masuk / Daftar =====
+let authMode = 'login';
+
+function openAuthModal(mode){
+  authMode = mode;
+  document.getElementById('auth-error').classList.remove('on');
+  document.getElementById('auth-form').reset();
+  renderAuthMode();
+  document.getElementById('auth-modal').classList.add('on');
+  document.getElementById('auth-overlay').classList.add('on');
+}
+function closeAuthModal(){
+  document.getElementById('auth-modal').classList.remove('on');
+  document.getElementById('auth-overlay').classList.remove('on');
+}
+function renderAuthMode(){
+  const isRegister = authMode === 'register';
+  document.getElementById('auth-title').textContent = isRegister ? 'Daftar Akun Baru' : 'Masuk ke Rizpedia';
+  document.getElementById('auth-name-block').style.display = isRegister ? '' : 'none';
+  document.getElementById('auth-password2-block').style.display = isRegister ? '' : 'none';
+  document.getElementById('auth-submit').textContent = isRegister ? 'Daftar' : 'Masuk';
+  document.getElementById('auth-switch-text').textContent = isRegister ? 'Sudah punya akun?' : 'Belum punya akun?';
+  document.getElementById('auth-switch-link').textContent = isRegister ? 'Masuk di sini' : 'Daftar di sini';
+}
+function showAuthError(msg){
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('on');
+}
+function updateAuthUI(){
+  const navcta = document.getElementById('navcta');
+  const user = JSON.parse(localStorage.getItem('rizpedia_user') || 'null');
+  const existingChip = document.getElementById('user-chip');
+  if(existingChip) existingChip.remove();
+  const btnMasuk = navcta.querySelector('[data-mode="login"]');
+  const btnDaftar = navcta.querySelector('[data-mode="register"]');
+  if(user){
+    btnMasuk.style.display = 'none';
+    btnDaftar.style.display = 'none';
+    const chip = document.createElement('div');
+    chip.className = 'user-chip';
+    chip.id = 'user-chip';
+    chip.innerHTML = `<div class="avatar-sm"></div><span>${user.name}</span><button data-action="logout">Keluar</button>`;
+    navcta.insertBefore(chip, navcta.firstChild.nextSibling);
+  } else {
+    btnMasuk.style.display = '';
+    btnDaftar.style.display = '';
+  }
+}
+
+document.querySelectorAll('[data-action="open-auth"]').forEach(btn=>{
+  btn.addEventListener('click', ()=> openAuthModal(btn.dataset.mode));
+});
+document.querySelectorAll('[data-action="close-auth"]').forEach(btn=>{
+  btn.addEventListener('click', closeAuthModal);
+});
+document.getElementById('auth-overlay').addEventListener('click', closeAuthModal);
+document.getElementById('auth-switch-link').addEventListener('click', (e)=>{
+  e.preventDefault();
+  openAuthModal(authMode === 'login' ? 'register' : 'login');
+});
+document.getElementById('auth-form').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  document.getElementById('auth-error').classList.remove('on');
+
+  const contact = document.getElementById('auth-contact').value.trim();
+  const password = document.getElementById('auth-password').value;
+
+  if(!contact){ showAuthError('Email atau nomor HP wajib diisi.'); return; }
+  if(password.length < 6){ showAuthError('Kata sandi minimal 6 karakter.'); return; }
+
+  if(authMode === 'register'){
+    const name = document.getElementById('auth-name').value.trim();
+    const password2 = document.getElementById('auth-password2').value;
+    if(!name){ showAuthError('Nama lengkap wajib diisi.'); return; }
+    if(password !== password2){ showAuthError('Konfirmasi kata sandi tidak cocok.'); return; }
+    localStorage.setItem('rizpedia_user', JSON.stringify({ name, contact }));
+  } else {
+    // mode login: nama diambil dari bagian sebelum @ / karakter pertama kontak, karena ini prototipe tanpa server auth sungguhan
+    const guessName = contact.includes('@') ? contact.split('@')[0] : contact;
+    localStorage.setItem('rizpedia_user', JSON.stringify({ name: guessName, contact }));
+  }
+  closeAuthModal();
+  updateAuthUI();
+  renderVouchers();
+  renderNotifications();
+});
+document.addEventListener('click', (e)=>{
+  if(e.target.dataset.action === 'logout'){
+    localStorage.removeItem('rizpedia_user');
+    updateAuthUI();
+    renderVouchers();
+    renderNotifications();
+  }
+});
+updateAuthUI();
+
+document.querySelectorAll('.pay-option').forEach(c=>{
+  c.addEventListener('click',()=>{
+    // hapus status "terpilih" dari SEMUA opsi (lintas grup QRIS/E-Wallet/VA), bukan cuma satu grup
+    document.querySelectorAll('.pay-option').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+  });
+});
+
+// Wiring pusat untuk semua tombol interaktif (kartu game, navigasi, drawer)
+document.querySelectorAll('[data-game-code]').forEach(el=>{
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', ()=>{
+    openGame(el.dataset.gameCode, el.dataset.gameTitle, el.dataset.gameDesc);
+  });
+});
+document.querySelectorAll('[data-action="show-screen"]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    showScreen(el.dataset.screen);
+    toggleDrawer(false); // tutup drawer juga kalau navigasi dipicu dari dalam drawer
+  });
+});
+document.querySelectorAll('[data-action="open-drawer"]').forEach(el=>{
+  el.addEventListener('click', ()=> toggleDrawer(true));
+});
+document.querySelectorAll('[data-action="close-drawer"]').forEach(el=>{
+  el.addEventListener('click', ()=> toggleDrawer(false));
+});
+
+// Filter kategori: klik chip -> tampilkan hanya kartu dengan data-category yang cocok
+let currentCategoryFilter = 'semua';
+let currentSearchText = '';
+
+function updateVisibleCards(){
+  document.querySelectorAll('.game-card').forEach(card=>{
+    const matchCategory = currentCategoryFilter === 'semua' || card.dataset.category === currentCategoryFilter;
+    const title = (card.dataset.gameTitle || '').toLowerCase();
+    const matchSearch = currentSearchText === '' || title.includes(currentSearchText);
+    card.style.display = (matchCategory && matchSearch) ? '' : 'none';
+  });
+  // Kalau satu section ("Paling Diburu" / "Voucher & Pulsa") jadi kosong semua, sembunyikan juga judulnya
+  document.querySelectorAll('.sechead').forEach(head=>{
+    const grid = head.nextElementSibling;
+    if(!grid || !grid.classList.contains('grid')) return;
+    const anyVisible = [...grid.children].some(card => card.style.display !== 'none');
+    head.style.display = anyVisible ? '' : 'none';
+    grid.style.display = anyVisible ? '' : 'none';
+  });
+}
+function applyFilter(filter){
+  currentCategoryFilter = filter;
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.filter === filter);
+  });
+  updateVisibleCards();
+}
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=> applyFilter(chip.dataset.filter));
+});
+
+// Link "Lihat semua →" di tiap judul section: reset filter ke Semua & scroll ke section itu
+document.querySelectorAll('[data-action="show-all"]').forEach(link=>{
+  link.addEventListener('click', (e)=>{
+    e.preventDefault();
+    document.getElementById('search-input').value = '';
+    currentSearchText = '';
+    applyFilter('semua');
+    link.closest('.sechead').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+document.getElementById('search-input').addEventListener('input', (e)=>{
+  currentSearchText = e.target.value.trim().toLowerCase();
+  updateVisibleCards();
+});
+
+// ===== Hero carousel (papan informasi) =====
+let heroIndex = 0;
+const heroSlideCount = document.querySelectorAll('.hero-slide').length;
+let heroAutoplayTimer;
+
+function goToHeroSlide(i){
+  heroIndex = (i + heroSlideCount) % heroSlideCount;
+  document.getElementById('hero-track').style.transform = `translateX(-${heroIndex * (100 / heroSlideCount)}%)`;
+  document.querySelectorAll('.hero-dot').forEach((d, idx)=> d.classList.toggle('on', idx === heroIndex));
+}
+function resetHeroAutoplay(){
+  clearInterval(heroAutoplayTimer);
+  heroAutoplayTimer = setInterval(()=> goToHeroSlide(heroIndex + 1), 5000);
+}
+document.querySelectorAll('.hero-dot').forEach(dot=>{
+  dot.addEventListener('click', ()=>{
+    goToHeroSlide(parseInt(dot.dataset.slide, 10));
+    resetHeroAutoplay();
+  });
+});
+document.querySelector('[data-action="hero-prev"]').addEventListener('click', ()=>{
+  goToHeroSlide(heroIndex - 1);
+  resetHeroAutoplay();
+});
+document.querySelector('[data-action="hero-next"]').addEventListener('click', ()=>{
+  goToHeroSlide(heroIndex + 1);
+  resetHeroAutoplay();
+});
+resetHeroAutoplay();
+
+// ===== Notifikasi (bel) =====
+function getNotifStore(){
+  try { return JSON.parse(localStorage.getItem('rizpedia_notifications') || '{}'); } catch(e){ return {}; }
+}
+function saveNotifStore(store){ localStorage.setItem('rizpedia_notifications', JSON.stringify(store)); }
+function addNotification(text){
+  const user = getCurrentUser();
+  if(!user) return;
+  const store = getNotifStore();
+  if(!store[user.contact]) store[user.contact] = [];
+  store[user.contact].unshift({ text, time: Date.now() });
+  store[user.contact] = store[user.contact].slice(0, 20);
+  saveNotifStore(store);
+  renderNotifications();
+}
+function timeAgo(ts){
+  const diff = Math.max(0, Date.now() - ts);
+  const min = Math.floor(diff/60000);
+  if(min < 1) return 'Baru saja';
+  if(min < 60) return `${min} menit lalu`;
+  const hr = Math.floor(min/60);
+  if(hr < 24) return `${hr} jam lalu`;
+  return `${Math.floor(hr/24)} hari lalu`;
+}
+function renderNotifications(){
+  const listEl = document.getElementById('notif-list');
+  const dotEl = document.getElementById('notif-dot');
+  if(!listEl) return;
+  const user = getCurrentUser();
+  const items = user ? (getNotifStore()[user.contact] || []) : [];
+  dotEl.style.display = items.length > 0 ? 'block' : 'none';
+  listEl.innerHTML = items.length === 0
+    ? '<div class="notif-empty">Belum ada notifikasi.</div>'
+    : items.map(n => `<div class="notif-item"><div class="t">${n.text}</div><div class="d">${timeAgo(n.time)}</div></div>`).join('');
+}
+document.getElementById('notif-bell')?.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const panel = document.getElementById('notif-panel');
+  panel.classList.toggle('on');
+  if(panel.classList.contains('on')) renderNotifications();
+});
+document.addEventListener('click', (e)=>{
+  const wrap = document.getElementById('notif-panel');
+  if(wrap && !e.target.closest('.notif-wrap')) wrap.classList.remove('on');
+});
+renderNotifications();
+
+// ===== Voucher: akun, jatah kocok, wallet, klaim =====
+const MAX_SHUFFLES = 2;
+function getCurrentUser(){
+  try { return JSON.parse(localStorage.getItem('rizpedia_user') || 'null'); } catch(e){ return null; }
+}
+function getVoucherStore(){
+  try { return JSON.parse(localStorage.getItem('rizpedia_voucher_state') || '{}'); } catch(e){ return {}; }
+}
+function saveVoucherStore(store){ localStorage.setItem('rizpedia_voucher_state', JSON.stringify(store)); }
+function getMyVoucherState(){
+  const user = getCurrentUser();
+  if(!user) return null;
+  const store = getVoucherStore();
+  const key = user.contact;
+  if(!store[key]) store[key] = { shuffles:0, wallet:[], usedCodes:[] };
+  return { key, store, state: store[key] };
+}
+
+function randomVoucherCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'RIZ-';
+  for(let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+function generateVouchers(n=6){
+  const types = [
+    { kind:'percent', value:5,  cap:10000,  label:'DISKON', big:'5%'  },
+    { kind:'percent', value:10, cap:20000,  label:'DISKON', big:'10%' },
+    { kind:'percent', value:15, cap:30000,  label:'DISKON', big:'15%' },
+    { kind:'percent', value:20, cap:50000,  label:'DISKON', big:'20%' },
+    { kind:'flat',    value:5000,  label:'POTONGAN', big:'Rp5rb'  },
+    { kind:'flat',    value:10000, label:'POTONGAN', big:'Rp10rb' },
+    { kind:'flat',    value:15000, label:'POTONGAN', big:'Rp15rb' },
+  ];
+  const scopes = ['Semua Produk','Mobile Legends','Free Fire','Semua Voucher Game','PC Game','Pulsa & Data'];
+  const minTx = [15000, 25000, 50000, 100000];
+
+  const vouchers = [];
+  for(let i=0;i<n;i++){
+    const t = types[Math.floor(Math.random()*types.length)];
+    const scope = scopes[Math.floor(Math.random()*scopes.length)];
+    const min = minTx[Math.floor(Math.random()*minTx.length)];
+    const days = 3 + Math.floor(Math.random()*28);
+    const expiry = new Date(Date.now() + days*86400000);
+    const expiryText = expiry.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+    const termCap = t.kind === 'percent' ? `Maks. potongan ${fmt(t.cap)}` : 'Tanpa batas maksimal';
+    vouchers.push({
+      code: randomVoucherCode(), kind: t.kind, value: t.value, cap: t.cap || null, min,
+      title: `${t.label} ${t.big}`, big: t.big, label: t.label, scope,
+      terms: `${termCap} · Min. transaksi ${fmt(min)} · Berlaku untuk ${scope} · Berlaku hingga ${expiryText}`,
+    });
+  }
+  return vouchers;
+}
+
+let voucherCandidates = [];
+function renderVouchers(){
+  const grid = document.getElementById('voucher-grid');
+  if(!grid) return;
+  const lockEl = document.getElementById('voucher-locked');
+  const shuffleBtn = document.getElementById('voucher-shuffle');
+  const shuffleInfo = document.getElementById('voucher-shuffle-info');
+  const walletHead = document.getElementById('voucher-wallet-head');
+  const walletEl = document.getElementById('voucher-wallet');
+
+  const user = getCurrentUser();
+  if(!user){
+    grid.style.display = 'none';
+    walletHead.style.display = 'none';
+    walletEl.style.display = 'none';
+    shuffleBtn.style.display = 'none';
+    shuffleInfo.textContent = '';
+    lockEl.style.display = 'block';
+    return;
+  }
+  lockEl.style.display = 'none';
+  grid.style.display = 'grid';
+  walletHead.style.display = 'block';
+  walletEl.style.display = 'flex';
+  shuffleBtn.style.display = 'inline-block';
+
+  const { key, store, state } = getMyVoucherState();
+  const remaining = Math.max(0, MAX_SHUFFLES - state.shuffles);
+  shuffleInfo.textContent = `Kesempatan kocok tersisa: ${remaining}/${MAX_SHUFFLES}`;
+  shuffleBtn.disabled = remaining <= 0;
+  shuffleBtn.textContent = remaining > 0 ? '🎲 Kocok Ulang' : '🎲 Kesempatan Habis';
+
+  if(voucherCandidates.length === 0) voucherCandidates = generateVouchers(6);
+
+  grid.innerHTML = '';
+  voucherCandidates.forEach(v=>{
+    const claimed = state.wallet.some(w=>w.code===v.code) || state.usedCodes.includes(v.code);
+    const card = document.createElement('div');
+    card.className = 'voucher-card';
+    card.innerHTML = `
+      <div class="stub"><span class="stub-value">${v.big}</span><small>${v.label}</small></div>
+      <div class="body">
+        <h4>${v.title}</h4>
+        <div class="scope">Khusus ${v.scope}</div>
+        <div class="terms">${v.terms}</div>
+        <div class="code-row"><code>${v.code}</code><button type="button" ${claimed?'disabled':''}>${claimed?'✓ Diklaim':'Klaim'}</button></div>
+      </div>`;
+    const btn = card.querySelector('.code-row button');
+    if(!claimed){
+      btn.addEventListener('click', ()=>{
+        state.wallet.push(v);
+        store[key] = state;
+        saveVoucherStore(store);
+        btn.disabled = true;
+        btn.textContent = '✓ Diklaim';
+        navigator.clipboard?.writeText(v.code).catch(()=>{});
+        addNotification(`🎟️ Kamu klaim voucher <b>${v.code}</b> (${v.title})`);
+        renderWallet();
+      });
+    }
+    grid.appendChild(card);
+  });
+  renderWallet();
+}
+function renderWallet(){
+  const walletEl = document.getElementById('voucher-wallet');
+  if(!walletEl) return;
+  const data = getMyVoucherState();
+  if(!data){ walletEl.innerHTML = ''; return; }
+  if(data.state.wallet.length === 0){
+    walletEl.innerHTML = '<p class="voucher-wallet-empty">Belum ada voucher yang diklaim. Klaim salah satu di atas dulu.</p>';
+    return;
+  }
+  walletEl.innerHTML = data.state.wallet.map(v=>`<div class="voucher-chip"><code>${v.code}</code><span>${v.title}</span></div>`).join('');
+}
+document.getElementById('voucher-shuffle')?.addEventListener('click', ()=>{
+  const data = getMyVoucherState();
+  if(!data) return;
+  if(data.state.shuffles >= MAX_SHUFFLES) return;
+  data.state.shuffles += 1;
+  data.store[data.key] = data.state;
+  saveVoucherStore(data.store);
+  voucherCandidates = generateVouchers(6);
+  renderVouchers();
+});
+renderVouchers();
+
+// ===== Terapkan voucher saat checkout (dipakai di ringkasan Top-up & Pembayaran) =====
+let appliedVoucher = null;
+function currentBasePrice(){
+  const g = GAMES[currentGame];
+  return g.denoms[currentDenomIdx].price;
+}
+function computeDiscount(v, price){
+  if(v.kind === 'flat') return Math.min(v.value, price);
+  const raw = Math.round(price * v.value / 100);
+  return v.cap ? Math.min(raw, v.cap) : raw;
+}
+function tryApplyVoucher(code, msgEl){
+  const data = getMyVoucherState();
+  if(!data){ msgEl.textContent = 'Masuk dulu untuk pakai voucher.'; msgEl.className = 'voucher-apply-msg err'; return; }
+  const idx = data.state.wallet.findIndex(w => w.code.toLowerCase() === code.trim().toLowerCase());
+  if(idx === -1){ msgEl.textContent = 'Kode tidak ditemukan di voucher kamu.'; msgEl.className = 'voucher-apply-msg err'; return; }
+  const v = data.state.wallet[idx];
+  const price = currentBasePrice();
+  if(price < v.min){ msgEl.textContent = `Transaksi minimal ${fmt(v.min)} untuk pakai voucher ini.`; msgEl.className = 'voucher-apply-msg err'; return; }
+  // Voucher sah dipakai -> hangus permanen dari wallet
+  data.state.wallet.splice(idx, 1);
+  data.state.usedCodes.push(v.code);
+  data.store[data.key] = data.state;
+  saveVoucherStore(data.store);
+  appliedVoucher = v;
+  msgEl.textContent = `Voucher ${v.code} diterapkan & sudah hangus (sekali pakai).`;
+  msgEl.className = 'voucher-apply-msg ok';
+  addNotification(`✅ Voucher <b>${v.code}</b> dipakai, hemat ${fmt(computeDiscount(v, price))}`);
+  renderWallet();
+  updateCart();
+}
+function wireVoucherApply(inputId, btnId, msgId){
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  const msg = document.getElementById(msgId);
+  if(!btn) return;
+  btn.addEventListener('click', ()=>{
+    if(!input.value.trim()) return;
+    tryApplyVoucher(input.value, msg);
+  });
+}
+wireVoucherApply('cart-voucher-input','cart-voucher-btn','cart-voucher-msg');
+wireVoucherApply('pay-voucher-input','pay-voucher-btn','pay-voucher-msg');
+
+// ===== Leaderboard: gabung akun bot + pelanggan asli (dari backend) =====
+const BOT_NAMES = [
+  'RizGamer99','DewiSlayer','BangJagoo','KakRozak_','Mas_Fahri','TeguhPro','AndiKesetrum','SariNoob',
+  'budi_top1','Zahra.GG','RafiiXD','Nabila_Cute','YudaMabar','Fikri.exe','Putri_Savage','DimasBejo',
+  'Wulan1245','Aditya_ML','RezaGacor','IndahPermata','Farhan_Rush','Citra.Top','Bayu_Sultan','Melati99',
+  'Iqbal_Legend','Sinta_QQ','Wahyu.Pro','Ayu_Kecil','Doni_Carry','Tania_x','Rendra_GG','Fitriani22',
+  'Galih_Pro','Nadia_Slay','Arka_Jaya','Vina.Cantik','Hendra_Boss','Lestari_QQ','Panji_Rush','Kirana_Top'
+];
+function shuffleArray(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function generateBotLeaderboard(n=15){
+  const names = shuffleArray(BOT_NAMES).slice(0, n);
+  let amount = 8000000 + Math.random()*14000000;
+  return names.map(name=>{
+    const row = { name, amount: Math.round(amount/500)*500, real:false };
+    amount *= (0.78 + Math.random()*0.12);
+    return row;
+  });
+}
+async function fetchRealCustomers(){
+  try {
+    const res = await fetch('/api/leaderboard');
+    if(!res.ok) return [];
+    const data = await res.json();
+    return data.map(r => ({ name: r.name, amount: r.amount, real:true }));
+  } catch(e){ return []; }
+}
+async function renderLeaderboard(){
+  const podiumEl = document.getElementById('lb-podium');
+  const listEl = document.getElementById('lb-list');
+  if(!podiumEl || !listEl) return;
+  const bots = generateBotLeaderboard(15);
+  const realCustomers = await fetchRealCustomers();
+  // Gabung, urutkan dari nominal terbesar; pelanggan asli otomatis menggeser bot kalau nominalnya menyamai/melebihi
+  const merged = [...bots, ...realCustomers].sort((a,b)=> b.amount - a.amount).slice(0, 15);
+  const medals = ['🥇','🥈','🥉'];
+
+  podiumEl.innerHTML = merged.slice(0,3).map((row,i)=>`
+    <div class="lb-podium-item rank-${i+1}${row.real?' lb-real':''}">
+      <div class="lb-medal">${medals[i]}</div>
+      <div class="lb-avatar">${row.name[0].toUpperCase()}</div>
+      <div class="lb-name">${row.name}${row.real?' <span class="lb-tag">Pelanggan</span>':''}</div>
+      <div class="lb-amount">${fmt(row.amount)}</div>
+    </div>`).join('');
+
+  listEl.innerHTML = merged.slice(3).map((row,i)=>`
+    <div class="lb-row${row.real?' lb-real':''}">
+      <span class="lb-rank">#${i+4}</span>
+      <div class="lb-avatar">${row.name[0].toUpperCase()}</div>
+      <span class="lb-name">${row.name}${row.real?' <span class="lb-tag">Pelanggan</span>':''}</span>
+      <span class="lb-amount">${fmt(row.amount)}</span>
+    </div>`).join('');
+}
+document.getElementById('leaderboard-shuffle')?.addEventListener('click', renderLeaderboard);
+renderLeaderboard();
+
+// ===== Catat transaksi saat pelanggan klik "Bayar Sekarang" =====
+const TX_KEY = 'rizpedia_transactions';
+const TX_TIMEOUT_MS = 5 * 60 * 1000; // 5 menit batas waktu bayar
+
+function getTxStore(){
+  try { return JSON.parse(localStorage.getItem(TX_KEY) || '{}'); } catch(e){ return {}; }
+}
+function saveTxStore(store){ localStorage.setItem(TX_KEY, JSON.stringify(store)); }
+function getMyTransactions(){
+  const user = getCurrentUser();
+  if(!user) return { key:null, store:null, list:[] };
+  const store = getTxStore();
+  const key = user.contact;
+  if(!store[key]) store[key] = [];
+  return { key, store, list: store[key] };
+}
+// Cek semua transaksi pending milik akun aktif; kalau sudah lewat 5 menit & belum dibayar -> batalkan otomatis
+function expireOverdueTransactions(){
+  const { key, store, list } = getMyTransactions();
+  if(!key) return false;
+  let changed = false;
+  const now = Date.now();
+  list.forEach(tx=>{
+    if(tx.status === 'pending' && now >= tx.expiresAt){
+      tx.status = 'cancelled';
+      changed = true;
+      addNotification(`❌ Transaksi ${tx.gameTitle} (${fmt(tx.amount)}) dibatalkan otomatis — tidak dibayar dalam 5 menit`);
+    }
+  });
+  if(changed){ store[key] = list; saveTxStore(store); }
+  return changed;
+}
+function createPendingTransaction({ gameTitle, denomLabel, amount, method }){
+  const data = getMyTransactions();
+  if(!data.key) return null;
+  const tx = {
+    id: 'TX-' + Date.now().toString(36).toUpperCase(),
+    gameTitle, denomLabel, amount, method,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + TX_TIMEOUT_MS,
+    status: 'pending',
+  };
+  data.list.unshift(tx);
+  data.store[data.key] = data.list;
+  saveTxStore(data.store);
+  return tx;
+}
+async function confirmTransactionPaid(txId){
+  const data = getMyTransactions();
+  if(!data.key) return null;
+  const tx = data.list.find(t => t.id === txId);
+  if(!tx || tx.status !== 'pending') return null;
+  if(Date.now() >= tx.expiresAt){ expireOverdueTransactions(); return null; } // keburu lewat waktu pas mau konfirmasi
+  tx.status = 'paid';
+  tx.paidAt = Date.now();
+  data.store[data.key] = data.list;
+  saveTxStore(data.store);
+  const user = getCurrentUser();
+  try {
+    await fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: user.name, email: user.contact, amount: tx.amount }),
+    });
+  } catch(e){ /* backend tidak aktif, tetap tersimpan lokal */ }
+  addNotification(`✅ Pembayaran ${tx.gameTitle} (${fmt(tx.amount)}) berhasil dikonfirmasi`);
+  return tx;
+}
+function timeLeftLabel(expiresAt){
+  const ms = Math.max(0, expiresAt - Date.now());
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function renderTransactions(){
+  expireOverdueTransactions();
+  const listEl = document.getElementById('tx-list');
+  if(!listEl) return;
+  const data = getMyTransactions();
+  if(!data.key){
+    listEl.innerHTML = '<p class="tx-empty">Masuk dulu untuk melihat transaksimu.</p>';
+    return;
+  }
+  if(data.list.length === 0){
+    listEl.innerHTML = '<p class="tx-empty">Belum ada transaksi.</p>';
+    return;
+  }
+  listEl.innerHTML = data.list.map(tx=>{
+    let statusHtml, actionHtml = '';
+    if(tx.status === 'pending'){
+      statusHtml = `<span class="tx-badge pending">⏳ Menunggu Pembayaran · ${timeLeftLabel(tx.expiresAt)}</span>`;
+      actionHtml = `<button class="tx-pay-btn" data-txid="${tx.id}">Saya Sudah Bayar</button>`;
+    } else if(tx.status === 'paid'){
+      statusHtml = `<span class="tx-badge paid">✅ Berhasil</span>`;
+    } else {
+      statusHtml = `<span class="tx-badge cancelled">❌ Dibatalkan (lewat waktu)</span>`;
+    }
+    return `<div class="tx-card" data-txid="${tx.id}">
+      <div class="tx-info">
+        <h4>${tx.gameTitle}${tx.denomLabel ? ' · ' + tx.denomLabel : ''}</h4>
+        <div class="tx-meta">${tx.method || ''} · ${new Date(tx.createdAt).toLocaleString('id-ID')}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount">${fmt(tx.amount)}</div>
+        ${statusHtml}
+        ${actionHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.tx-pay-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+      const tx = await confirmTransactionPaid(btn.dataset.txid);
+      if(tx){ await renderLeaderboard(); }
+      renderTransactions();
+    });
+  });
+}
+// perbarui tampilan tiap detik SAAT layar transaksi lagi dibuka (buat hitung mundur & auto-batal real-time)
+setInterval(()=>{
+  if(document.getElementById('screen-transaksi')?.classList.contains('on')) renderTransactions();
+}, 1000);
+renderTransactions();
+
+document.getElementById('pay-submit-btn')?.addEventListener('click', ()=>{
+  const user = getCurrentUser();
+  if(!user){ openAuthModal('login'); return; }
+
+  const price = currentBasePrice();
+  const discount = appliedVoucher ? computeDiscount(appliedVoucher, price) : 0;
+  const total = Math.max(0, price - discount);
+  const selectedOpt = document.querySelector('.pay-option.selected .pay-name');
+  const method = selectedOpt ? selectedOpt.childNodes[0].textContent.trim() : 'QRIS';
+  const gameTitle = document.getElementById('topup-title')?.textContent || currentGame;
+  const denom = GAMES[currentGame]?.denoms?.[currentDenomIdx];
+  const denomLabel = denom ? `${denom.amt}${denom.unit ? ' ' + denom.unit : ''}` : '';
+
+  createPendingTransaction({ gameTitle, denomLabel, amount: total, method });
+  appliedVoucher = null;
+  addNotification(`⏳ Pesanan ${gameTitle} (${fmt(total)}) menunggu pembayaran — batas waktu 5 menit`);
+  showScreen('transaksi');
+  renderTransactions();
+});
+
+// ===== Poin RizPoint: dihitung dari total transaksi yang BERHASIL dibayar (1 poin / Rp1.000) =====
+function renderPoin(){
+  const valueEl = document.getElementById('poin-value');
+  const subEl = document.getElementById('poin-sub');
+  if(!valueEl) return;
+  const user = getCurrentUser();
+  if(!user){
+    valueEl.textContent = '0';
+    subEl.textContent = 'Masuk dulu untuk mulai kumpulin poin';
+    return;
+  }
+  const { list } = getMyTransactions();
+  const totalPaid = list.filter(t => t.status === 'paid').reduce((sum, t) => sum + t.amount, 0);
+  const points = Math.floor(totalPaid / 1000);
+  valueEl.textContent = points.toLocaleString('id-ID');
+  subEl.textContent = `Dari total top up berhasil ${fmt(totalPaid)}`;
+}
+
+// ===== Pusat Bantuan: FAQ accordion =====
+const FAQ_ITEMS = [
+  { q: 'Bagaimana cara top up di Rizpedia?', a: 'Pilih game atau layanan yang kamu mau di Beranda, masukkan data akun (User ID/Zone ID), pilih nominal, lalu lanjutkan ke pembayaran. Setelah bayar, saldo masuk otomatis dalam hitungan detik.' },
+  { q: 'Kenapa transaksi saya dibatalkan otomatis?', a: 'Setiap pesanan punya batas waktu 5 menit untuk dibayar. Kalau lewat dari itu tanpa konfirmasi pembayaran, pesanan otomatis dibatalkan demi menjaga stok harga tetap akurat. Kamu bisa cek statusnya kapan saja di menu "Cek Transaksi".' },
+  { q: 'Bagaimana cara pakai kode voucher?', a: 'Klaim voucher di halaman Promo & Voucher (kocok dadu buat lihat pilihan acak, maksimal 2x per akun), lalu masukkan kodenya di kolom voucher pada halaman Top Up atau Pembayaran sebelum bayar.' },
+  { q: 'Kenapa jatah kocok voucher cuma 2 kali?', a: 'Batasan ini supaya kesempatan dapat voucher tetap adil buat semua pengguna. Jatah kocok akan diperbarui secara berkala.' },
+  { q: 'Kode voucher saya kok tidak bisa dipakai?', a: 'Kode voucher bersifat pribadi per akun (tidak bisa dipindah ke akun lain) dan hanya berlaku sekali pakai. Pastikan juga transaksimu sudah memenuhi syarat minimal yang tertera di vouchernya.' },
+];
+function renderFaq(){
+  const listEl = document.getElementById('faq-list');
+  if(!listEl) return;
+  listEl.innerHTML = FAQ_ITEMS.map((item, i)=>`
+    <div class="faq-item" data-idx="${i}">
+      <div class="faq-q"><span>${item.q}</span><span class="chev">▾</span></div>
+      <div class="faq-a"><p>${item.a}</p></div>
+    </div>`).join('');
+  listEl.querySelectorAll('.faq-item').forEach(el=>{
+    el.querySelector('.faq-q').addEventListener('click', ()=> el.classList.toggle('open'));
+  });
+}
+renderFaq();
+// Set highlight kuning awal ke "Beranda" (karena halaman home sudah aktif duluan sejak load, bukan lewat showScreen())
+document.querySelectorAll('.navlinks a[data-screen], .drawer-menu a[data-screen]').forEach(a=>{
+  a.classList.toggle('active', a.dataset.screen === 'home');
+});
+
+loadGames();
+</script>
+</body>
+</html>
